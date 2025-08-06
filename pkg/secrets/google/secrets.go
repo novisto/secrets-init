@@ -106,34 +106,43 @@ func (sp SecretsProvider) ResolveSecrets(ctx context.Context, vars []string) ([]
 func (sp SecretsProvider) processEnvironmentVariable(ctx context.Context, env string) (string, error) {
 	kv := strings.Split(env, "=")
 	key, value := kv[0], kv[1]
-	if !strings.HasPrefix(value, "gcp:secretmanager:") {
-		return env, nil
-	}
 
-	// construct valid secret name
-	name := strings.TrimPrefix(value, "gcp:secretmanager:")
-
-	isLong := fullSecretRe.MatchString(name)
-
-	if !isLong {
-		if sp.projectID == "" {
-			return "", errors.Errorf("failed to get secret \"%s\" from Google Secret Manager (unknown project)", name)
-		}
-		name = fmt.Sprintf("projects/%s/secrets/%s", sp.projectID, name)
-	}
-
-	// if no version specified add latest
-	if !strings.Contains(name, "/versions/") {
-		name += "/versions/latest"
-	}
-
-	// get secret value
-	req := &secretspb.AccessSecretVersionRequest{
-		Name: name,
-	}
-	secret, err := sp.sm.AccessSecretVersion(ctx, req)
+	re, err := regexp.Compile(`gcp:secretmanager:[\w\-/]+`)
 	if err != nil {
-		return "", fmt.Errorf("failed to get secret from Google Secret Manager: %w", err)
+		return "", fmt.Errorf("failed to compile regex: %w", err)
 	}
-	return key + "=" + string(secret.Payload.GetData()), nil
+
+	placeholders := make(map[string]bool)
+	matches := re.FindAllString(value, -1)
+	for _, match := range matches {
+		placeholders[match] = true
+	}
+	output := value
+
+	for placeholder := range placeholders {
+		name := strings.TrimPrefix(placeholder, "gcp:secretmanager:")
+		isLong := fullSecretRe.MatchString(name)
+
+		if !isLong {
+			if sp.projectID == "" {
+				return "", errors.Errorf("failed to get secret \"%s\" from Google Secret Manager (unknown project)", name)
+			}
+			name = fmt.Sprintf("projects/%s/secrets/%s", sp.projectID, name)
+		}
+		if !strings.Contains(name, "/versions/") {
+			name += "/versions/latest"
+		}
+
+		req := &secretspb.AccessSecretVersionRequest{
+			Name: name,
+		}
+		secret, err := sp.sm.AccessSecretVersion(ctx, req)
+		if err != nil {
+			return "", fmt.Errorf("failed to get secret from Google Secret Manager: %w", err)
+		}
+
+		output = strings.ReplaceAll(output, placeholder, string(secret.Payload.GetData()))
+	}
+
+	return key + "=" + output, nil
 }
