@@ -28,7 +28,7 @@ export CGO_ENABLED=0
 export GOPROXY=https://proxy.golang.org
 
 .PHONY: all
-all: fmt lint test ; $(info $(M) building executable...) @ ## Build program binary
+all: fmt ; $(info $(M) building executable...) @ ## Build program binary
 	$Q env GOOS=$(TARGETOS) GOARCH=$(TARGETARCH) $(GO) build \
 		-tags release \
 		-ldflags "$(LDFLAGS_VERSION) -X main.Platform=$(TARGETOS)/$(TARGETARCH)" \
@@ -52,7 +52,7 @@ platfrom-build: clean lint test ; $(info $(M) building binaries for multiple os/
 setup-tools: setup-lint setup-gocov setup-gocov-xml setup-go2xunit setup-mockery setup-ghr
 
 setup-lint:
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
+	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.3.0
 setup-gocov:
 	$(GO) install github.com/axw/gocov/...
 setup-gocov-xml:
