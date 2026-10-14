@@ -81,9 +81,10 @@ MY_DB_PASSWORD=mydbpassword/versions/2
 
 ### Exit on unresolved secrets
 
-`secrets-init` exits with status 1 when the secrets provider cannot be initialized or
-when any secret reference cannot be resolved. The command is not started in that case,
-so a container never runs with an unresolved reference as its value.
+`secrets-init` exits with status 1 when the configured provider (`aws` or `google`)
+cannot be initialized, or when any secret reference cannot be resolved. The command is
+not started in either case. A provider name other than `aws` or `google` is not an
+error: no provider is used and the environment is passed through unresolved.
 
 To start the command anyway, set `EXIT_EARLY=false` (or `SECRETS_INIT_EXIT_EARLY=false`,
 or pass `--exit-early=false`). The command then receives the original, unresolved
