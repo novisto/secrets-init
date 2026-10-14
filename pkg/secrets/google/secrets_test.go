@@ -174,6 +174,47 @@ func TestSecretsProvider_ResolveSecrets(t *testing.T) {
 			},
 		},
 		{
+			name: "values containing '=' are kept whole",
+			args: args{
+				ctx:  context.TODO(),
+				vars: []string{"DB_URL=postgres://h/db?sslmode=require", "PADDED=YWJjZA==", "EMPTY="},
+			},
+			mockServiceProvider: func(_ context.Context, mockSM *mocks.GoogleSecretsManagerAPI) secrets.Provider {
+				return &SecretsProvider{sm: mockSM}
+			},
+			want: []string{"DB_URL=postgres://h/db?sslmode=require", "PADDED=YWJjZA==", "EMPTY="},
+		},
+		{
+			name: "secret inside a value containing '='",
+			args: args{
+				ctx:  context.TODO(),
+				vars: []string{"DSN=user:gcp:secretmanager:projects/test-project-id/secrets/test-secret@h/db?sslmode=require"},
+			},
+			mockServiceProvider: func(ctx context.Context, mockSM *mocks.GoogleSecretsManagerAPI) secrets.Provider {
+				sp := SecretsProvider{sm: mockSM}
+				req := secretspb.AccessSecretVersionRequest{
+					Name: "projects/test-project-id/secrets/test-secret/versions/latest",
+				}
+				res := secretspb.AccessSecretVersionResponse{Payload: &secretspb.SecretPayload{
+					Data: []byte("p4ss"),
+				}}
+				mockSM.On("AccessSecretVersion", ctx, &req).Return(&res, nil)
+				return &sp
+			},
+			want: []string{"DSN=user:p4ss@h/db?sslmode=require"},
+		},
+		{
+			name: "entry without '=' passes through",
+			args: args{
+				ctx:  context.TODO(),
+				vars: []string{"NOEQUALS"},
+			},
+			mockServiceProvider: func(_ context.Context, mockSM *mocks.GoogleSecretsManagerAPI) secrets.Provider {
+				return &SecretsProvider{sm: mockSM}
+			},
+			want: []string{"NOEQUALS"},
+		},
+		{
 			name: "error getting secret from Secrets Manager",
 			args: args{
 				ctx: context.TODO(), vars: []string{

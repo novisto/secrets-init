@@ -104,8 +104,10 @@ func (sp SecretsProvider) ResolveSecrets(ctx context.Context, vars []string) ([]
 
 // processEnvironmentVariable processes the environment variable and replaces the value with the secret value
 func (sp SecretsProvider) processEnvironmentVariable(ctx context.Context, env string) (string, error) {
-	kv := strings.Split(env, "=")
-	key, value := kv[0], kv[1]
+	key, value, found := strings.Cut(env, "=")
+	if !found {
+		return env, nil
+	}
 
 	re, err := regexp.Compile(`gcp:secretmanager:[\w\-/]+`)
 	if err != nil {
