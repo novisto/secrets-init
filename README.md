@@ -79,6 +79,17 @@ MY_DB_PASSWORD=mydbpassword
 MY_DB_PASSWORD=mydbpassword/versions/2
 ```
 
+### Exit on unresolved secrets
+
+`secrets-init` exits with status 1 when the secrets provider cannot be initialized or
+when any secret reference cannot be resolved. The command is not started in that case,
+so a container never runs with an unresolved reference as its value.
+
+To start the command anyway, set `EXIT_EARLY=false` (or `SECRETS_INIT_EXIT_EARLY=false`,
+or pass `--exit-early=false`). The command then receives the original, unresolved
+environment. A variable that is present but empty, such as `EXIT_EARLY=`, also counts
+as false.
+
 ### Requirement
 
 #### Container

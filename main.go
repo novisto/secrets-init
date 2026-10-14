@@ -58,7 +58,8 @@ func newApp() *cli.App {
 			},
 			&cli.BoolFlag{
 				Name:    "exit-early",
-				Usage:   "exit when a provider fails or a secret is not found",
+				Usage:   "exit when a provider fails or a secret is not found; disable with EXIT_EARLY=false",
+				Value:   true,
 				EnvVars: []string{"SECRETS_INIT_EXIT_EARLY", "EXIT_EARLY"},
 			},
 			&cli.StringFlag{
