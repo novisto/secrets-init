@@ -35,6 +35,12 @@ var (
 )
 
 func main() {
+	if err := newApp().Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func newApp() *cli.App {
 	app := &cli.App{
 		Before: setLogFormatter,
 		Flags: []cli.Flag{
@@ -88,11 +94,7 @@ func main() {
 		fmt.Printf("  platform: %s\n", Platform)
 		fmt.Printf("  built with: %s\n", runtime.Version())
 	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return app
 }
 
 func copyCmd(c *cli.Context) error {
