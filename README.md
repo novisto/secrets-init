@@ -82,9 +82,15 @@ MY_DB_PASSWORD=mydbpassword/versions/2
 ### Exit on unresolved secrets
 
 `secrets-init` exits with status 1 when the configured provider (`aws` or `google`)
-cannot be initialized, or when any secret reference cannot be resolved. The command is
-not started in either case. A provider name other than `aws` or `google` is not an
-error: no provider is used and the environment is passed through unresolved.
+cannot be initialized, or when the provider fails to fetch a secret it recognizes as a
+reference. The command is not started in either case.
+
+Some values still pass through unchanged without an error:
+
+- text the provider does not recognize as a reference, such as `gcp:secretmanager:`
+  with no secret name, or an SSM ARN in a form the AWS provider does not parse;
+- every value, when the provider name is something other than `aws` or `google`, since
+  no provider is used at all.
 
 To start the command anyway, set `EXIT_EARLY=false` (or `SECRETS_INIT_EXIT_EARLY=false`,
 or pass `--exit-early=false`). The command then receives the original, unresolved
