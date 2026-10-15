@@ -35,6 +35,12 @@ var (
 )
 
 func main() {
+	if err := newApp().Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func newApp() *cli.App {
 	app := &cli.App{
 		Before: setLogFormatter,
 		Flags: []cli.Flag{
@@ -52,7 +58,8 @@ func main() {
 			},
 			&cli.BoolFlag{
 				Name:    "exit-early",
-				Usage:   "exit when a provider fails or a secret is not found",
+				Usage:   "exit when a provider fails or a secret is not found; disable with EXIT_EARLY=false",
+				Value:   true,
 				EnvVars: []string{"SECRETS_INIT_EXIT_EARLY", "EXIT_EARLY"},
 			},
 			&cli.StringFlag{
@@ -88,11 +95,7 @@ func main() {
 		fmt.Printf("  platform: %s\n", Platform)
 		fmt.Printf("  built with: %s\n", runtime.Version())
 	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return app
 }
 
 func copyCmd(c *cli.Context) error {
